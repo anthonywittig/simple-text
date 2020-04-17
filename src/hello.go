@@ -69,7 +69,7 @@ func main() {
 	for _, c := range contacts {
 		if err := sendMessage(message, c, config.Twilio); err != nil {
 			errMsg := fmt.Sprintf("error sending message for %s (%s)", c.Name, c.PhoneNumber)
-			log.Fatalln(errors.Wrap(err, errMsg))
+			fmt.Println(errors.Wrap(err, errMsg))
 		} else {
 			fmt.Printf("Sent message to %s (%s)\n", c.Name, c.PhoneNumber)
 		}
