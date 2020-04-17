@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -49,19 +51,36 @@ func main() {
 		panic(fmt.Errorf("fatal error getting contacts: %s", err))
 	}
 
+	message, err := getMessage()
+	if err != nil {
+		panic(fmt.Errorf("fatal error getting message: %s", err))
+	}
+
+	fmt.Printf("You are about to send the following message:\n\n%s\n\nAre you sure you want to (type YES if so).\n", message)
+	shouldWeContinue, err := bufio.NewReader(os.Stdin).ReadString('\n')
+	if err != nil {
+		panic(fmt.Errorf("fatal error user input: %s", err))
+	}
+
+	if shouldWeContinue != "YES\n" {
+		panic("Sounds like we're not ready, exiting!")
+	}
+
 	for _, c := range contacts {
-		//fmt.Printf("%+v\n", c)
-		if err := sendMessage(c, config.Twilio); err != nil {
-			panic(fmt.Errorf("fatal error sending message: %s", err))
+		if err := sendMessage(message, c, config.Twilio); err != nil {
+			errMsg := fmt.Sprintf("error sending message for %s (%s)", c.Name, c.PhoneNumber)
+			log.Fatalln(errors.Wrap(err, errMsg))
+		} else {
+			fmt.Printf("Sent message to %s (%s)\n", c.Name, c.PhoneNumber)
 		}
 	}
 }
 
-func sendMessage(contact Contact, twilio Twilio) error {
+func sendMessage(message string, contact Contact, twilio Twilio) error {
 	msgData := url.Values{}
 	msgData.Set("To", contact.PhoneNumber)
 	msgData.Set("From", twilio.PhoneNumber)
-	msgData.Set("Body", "test text - hi!")
+	msgData.Set("Body", message)
 	msgDataReader := *strings.NewReader(msgData.Encode())
 
 	client := &http.Client{}
@@ -86,10 +105,10 @@ func sendMessage(contact Contact, twilio Twilio) error {
 		if err != nil {
 			return err
 		}
-		fmt.Printf("Send message to %s (%s)\n", contact.Name, contact.PhoneNumber)
 	} else {
 		return errors.New(fmt.Sprintf("bad status code: %s", resp.Status))
 	}
+
 	return nil
 }
 
@@ -141,4 +160,18 @@ func cleanPhone(dirty string) (string, error) {
 	}
 
 	return fmt.Sprintf("+1%s", dirty), nil
+}
+
+func getMessage() (string, error) {
+	file, err := os.Open("message.txt")
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	b, err := ioutil.ReadAll(file)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s", b), nil
 }

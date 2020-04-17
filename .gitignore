@@ -1,2 +1,6 @@
-config.*
+config.yaml*
+!config.yaml.example
 contacts.csv*
+!contacts.csv.example
+message.txt*
+!message.txt.example

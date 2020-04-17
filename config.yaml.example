@@ -1,0 +1,5 @@
+twilio:
+  account: ACCOUNT_NUMBER
+  sid: API_KEY_SID
+  secret: API_KEY_SECRET
+  phoneNumber: FROM_PHONE_NUMBER_WITH_LEADING+1
