@@ -66,7 +66,13 @@ func main() {
 		panic("Sounds like we're not ready, exiting!")
 	}
 
+	attemptedNumbers := map[string]struct{}{}
 	for _, c := range contacts {
+		if _, ok := attemptedNumbers[c.PhoneNumber]; ok {
+			continue
+		}
+		attemptedNumbers[c.PhoneNumber] = struct{}{}
+
 		if err := sendMessage(message, c, config.Twilio); err != nil {
 			errMsg := fmt.Sprintf("error sending message for %s (%s)", c.Name, c.PhoneNumber)
 			fmt.Println(errors.Wrap(err, errMsg))
